@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wanzz License Manager</title>
+    <style>
+        :root { --bg: #0f172a; --panel: #1e293b; --text: #e2e8f0; --accent: #3b82f6; --danger: #ef4444; --success: #22c55e; }
+        body { background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: var(--panel); padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); width: 100%; max-width: 450px; text-align: center; border: 1px solid #334155; }
+        h2 { margin-bottom: 20px; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; font-size: 1.5rem; }
+        input { width: 90%; padding: 12px; margin: 8px 0; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 6px; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--accent); box-shadow: 0 0 8px rgba(59, 130, 246, 0.3); }
+        .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
+        button { padding: 10px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; text-transform: uppercase; font-size: 0.9rem; }
+        .btn-add { background: var(--success); } .btn-add:hover { background: #16a34a; }
+        .btn-del { background: var(--danger); } .btn-del:hover { background: #dc2626; }
+        .list-container { margin-top: 25px; text-align: left; max-height: 250px; overflow-y: auto; background: #0f172a; border-radius: 8px; border: 1px solid #334155; padding: 10px; }
+        .list-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #1e293b; font-family: monospace; font-size: 1.1em; }
+        .list-item:last-child { border-bottom: none; }
+        .status-active { color: var(--success); font-size: 0.8em; }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>🛡️ LICENSE ADMIN</h2>
+        <input type="password" id="adminKey" placeholder="🔑 Masukkan Kunci Admin...">
+        <hr style="border: 0; border-top: 1px solid #334155; margin: 15px 0;">
+        <input type="number" id="userNumber" placeholder="📱 Nomor WhatsApp (628xxx)">
+        
+        <div class="btn-group">
+            <button class="btn-add" onclick="manage('add')">Tambah</button>
+            <button class="btn-del" onclick="manage('del')">Hapus</button>
+        </div>
+
+        <div class="list-container">
+            <div style="margin-bottom: 10px; font-size: 0.9em; color: #94a3b8;">📋 DAFTAR PENGGUNA TERDAFTAR:</div>
+            <div id="userList"><i>Memuat data...</i></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+
+        async function loadUsers() {
+            try {
+                let res = await fetch(API_URL + '/list');
+                let data = await res.json();
+                let html = '';
+                if(data.length === 0) {
+                    html = '<div style="text-align:center; padding:10px; color:#64748b;">Belum ada lisensi aktif.</div>';
+                } else {
+                    data.forEach(num => {
+                        html += `<div class="list-item"><span>${num}</span> <span class="status-active">● AKTIF</span></div>`;
+                    });
+                }
+                document.getElementById('userList').innerHTML = html;
+            } catch (e) {
+                document.getElementById('userList').innerHTML = '<span style="color:red">Gagal koneksi ke server.</span>';
+            }
+        }
+
+        async function manage(action) {
+            let key = document.getElementById('adminKey').value;
+            let number = document.getElementById('userNumber').value;
+            
+            if(!key) return alert('❌ Masukkan Kunci Admin dulu!');
+            if(!number) return alert('❌ Masukkan Nomor WhatsApp!');
+
+            try {
+                let res = await fetch(API_URL + '/' + action, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key, number })
+                });
+                let txt = await res.text();
+                alert(txt);
+                if(txt.includes('SUKSES')) {
+                    document.getElementById('userNumber').value = '';
+                    loadUsers();
+                }
+            } catch (e) {
+                alert('Error System: ' + e.message);
+            }
+        }
+        
+        // Auto Load
+        loadUsers();
+    </script>
+</body>
+</html>
